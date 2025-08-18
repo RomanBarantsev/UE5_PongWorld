@@ -18,7 +18,6 @@
 #include "PingPong/GameStates/PongGameState.h"
 #include "PingPong/PlayerStates/PongPlayerState.h"
 #include "GeometryCollection/GeometryCollectionComponent.h"
-#include "GeometryCollection/GeometryCollectionSizeSpecificUtility.h"
 #include "Particles/ParticleSystemComponent.h"
 
 // Sets default values
@@ -139,7 +138,8 @@ void APongBall::CheckGoal_Implementation(FHitResult HitResult)
 		if(GoalOwner!=GetOwner())
 		{
 			PingPongGoal->LightUpLightBox();
-			AddScoreToPlayer(GoalOwner);
+			AddScoreToPlayer(GetOwner());
+			UE_LOG(LogTemp, Warning, TEXT("Goal is %s"), *GoalOwner->GetName());
 		}
 		Multicast_HitEffect(HitResult.Location);
 		if (!Indestructible)
@@ -151,7 +151,7 @@ void APongBall::CheckGoal_Implementation(FHitResult HitResult)
 
 void APongBall::AddScoreToPlayer_Implementation(AActor* Player)
 {
-	APongPlayerState* PingPongPlayerState=GetOwner()->GetInstigatorController()->GetPlayerState<APongPlayerState>();
+	APongPlayerState* PingPongPlayerState =Player->GetInstigatorController()->GetPlayerState<APongPlayerState>();
 	check(PingPongPlayerState);			
 	PingPongPlayerState->SetScore(PingPongPlayerState->GetScore()+PingPongGameState->GetModificatorPoints(Modificator));
 	PingPongGameState->UpdatePlayersScore(PingPongPlayerState->GetPlayerId(),PingPongPlayerState->GetScore());

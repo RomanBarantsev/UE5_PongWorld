@@ -146,16 +146,27 @@ void APongPlatform::SetSpeedMultiplier(float Multiplier)
 
 bool APongPlatform::CheckScore(EBallModificators Modificator)
 {
-	APongPlayerState* PlayerState = Cast<APongPlayerState>(UGameplayStatics::GetPlayerState(GetWorld(),0));
-	check(PlayerState);
-	if(PlayerState->GetScore()-GameState->GetShotCost(Modificator)>0)
+	APongPlayerState* PlayerState = nullptr;
+	AController* Controller = GetOwner()->GetInstigatorController();
+	if (Controller)
 	{
-		PlayerState->SetScore(PlayerState->GetScore()-GameState->GetShotCost(Modificator));
+		APongPlayerController* PlayerController = Cast<APongPlayerController>(Controller);
+		if (PlayerController)
+		{
+			PlayerState = PlayerController->GetPlayerState<APongPlayerState>();
+		}
+	}	
+	if (PlayerState)
+	{
+		if(PlayerState->GetScore()-GameState->GetShotCost(Modificator)>0)
+		{
+			PlayerState->SetScore(PlayerState->GetScore()-GameState->GetShotCost(Modificator));
 		
-		PingPongGameState->UpdatePlayersScore(PlayerState->GetPlayerId(),PlayerState->GetScore());
-		PingPongGameState->AddMaxScore(PlayerState->GetScore());
-		return true;
-	}
+			PingPongGameState->UpdatePlayersScore(PlayerState->GetPlayerId(),PlayerState->GetScore());
+			PingPongGameState->AddMaxScore(PlayerState->GetScore());
+			return true;
+		}
+	}	
 	return false;
 }
 
