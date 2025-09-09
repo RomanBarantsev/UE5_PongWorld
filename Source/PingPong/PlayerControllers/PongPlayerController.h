@@ -67,8 +67,10 @@ public:
 	virtual void Fire();
 	UFUNCTION(Client,Reliable,WithValidation)
 	void OpenMenu();
+	float RightValue;
 	UFUNCTION(Server,Reliable,WithValidation)
 	void Server_PlatformMoveRight(float AxisValue) ;
+	float ForwardValue;
 	UFUNCTION(Server,Reliable,WithValidation)
 	virtual void Server_PlatformMoveForward(float AxisValue);
 	UFUNCTION(Server,Reliable,WithValidation)

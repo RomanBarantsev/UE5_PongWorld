@@ -127,6 +127,9 @@ void APongPlayerController::SetupInputComponent()
 
 void APongPlayerController::MoveRight(float AxisValue)
 {
+	if (RightValue==AxisValue)
+		return;
+	RightValue=AxisValue;
 	if (APongSpectatorPawn* SpecPawn = Cast<APongSpectatorPawn>(GetPawn()))
 	{
 		FRotator ControlRot = GetControlRotation();
@@ -145,6 +148,9 @@ void APongPlayerController::MoveRight(float AxisValue)
 
 void APongPlayerController::MoveForward(float AxisValue)
 {
+	if (ForwardValue==AxisValue)
+		return;
+	ForwardValue=AxisValue;
 	if (APongSpectatorPawn* SpecPawn = Cast<APongSpectatorPawn>(GetPawn()))
 	{
 		FRotator ControlRot = GetControlRotation();
@@ -225,7 +231,7 @@ bool APongPlayerController::Fire_Validate()
 }
 
 void APongPlayerController::Server_PlatformMoveForward_Implementation(float AxisValue)
-{
+{	
 	if(Platform)
 	{		
 		Platform->Server_GetForwardValue(AxisValue);
@@ -244,7 +250,7 @@ bool APongPlayerController::Server_PlatformMoveForward_Validate(float AxisValue)
 }
 
 void APongPlayerController::Server_PlatformMoveRight_Implementation(float AxisValue)
-{
+{	
 	if(Platform)
 	{		
 		Platform->Server_GetRightValue(AxisValue);

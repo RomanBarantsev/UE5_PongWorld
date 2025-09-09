@@ -82,8 +82,15 @@ bool APongPlatform::Server_Fire_Validate(EBallModificators Modificator)
 }
 
 void APongPlatform::Server_GetRightValue_Implementation(float AxisValue)
-{
-	CurrentRightAxisValue=AxisValue;
+{		
+	if(bInvertedControl)
+	{
+		CurrentRightAxisValue=AxisValue*-1;
+	}
+	else
+	{
+		CurrentRightAxisValue=AxisValue;
+	}
 }
 
 bool APongPlatform::Server_GetRightValue_Validate(float AxisValue)
@@ -93,7 +100,14 @@ bool APongPlatform::Server_GetRightValue_Validate(float AxisValue)
 
 void APongPlatform::Server_GetForwardValue_Implementation(float AxisValue)
 {
-	CurrentForwardAxisValue=AxisValue;
+	if(bInvertedControl)
+	{
+		CurrentForwardAxisValue=AxisValue*-1;
+	}
+	else
+	{
+		CurrentForwardAxisValue=AxisValue;
+	}
 }
 
 bool APongPlatform::Server_GetForwardValue_Validate(float AxisValue)
@@ -102,13 +116,12 @@ bool APongPlatform::Server_GetForwardValue_Validate(float AxisValue)
 }
 
 void APongPlatform::TickMoveRight(float DeltaTime)
-{
-	if(bInvertedControl)
-	{
-		CurrentRightAxisValue=-CurrentRightAxisValue;
-	}	
+{	
 	targetRightAxisValue = FMath::Lerp(targetRightAxisValue,CurrentRightAxisValue,InterpolationKey);
-	
+	if (targetForwardAxisValue<-0.1f || targetRightAxisValue>0.1f)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("speed=%f"),CurrentRightAxisValue)
+	}
 	FVector nextLocation = GetActorLocation() + GetActorRightVector() * MoveSpeed * targetRightAxisValue*DeltaTime;		
 	if(!SetActorLocation(nextLocation, true))
 	{
@@ -118,12 +131,7 @@ void APongPlatform::TickMoveRight(float DeltaTime)
 
 void APongPlatform::TickMoveForward(float DeltaTime)
 {
-	if(bInvertedControl)
-	{
-		CurrentForwardAxisValue=-CurrentForwardAxisValue;
-	}	
-	targetForwardAxisValue = FMath::Lerp(targetForwardAxisValue, CurrentForwardAxisValue, InterpolationKey);
-    
+	targetForwardAxisValue = FMath::Lerp(targetForwardAxisValue, CurrentForwardAxisValue, InterpolationKey);    
 	FVector nextLocation = GetActorLocation() + GetActorForwardVector() * MoveSpeed * targetForwardAxisValue * DeltaTime;
 	SetActorLocation(nextLocation, true);
 }
