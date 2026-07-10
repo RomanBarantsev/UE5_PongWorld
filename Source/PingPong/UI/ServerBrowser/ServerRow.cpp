@@ -5,6 +5,8 @@
 
 #include "Components/Button.h"
 #include "Engine/Canvas.h"
+#include "Kismet/GameplayStatics.h"
+#include "PingPong/GameInstance/Pong_GameInstance.h"
 
 void UServerRow::SetCurrentPlayers(int Players,int maxPlayers)
 {
@@ -19,6 +21,15 @@ void UServerRow::SetServerName(FString Name)
 
 void UServerRow::OnButtonClicked()
 {
+	if (bIsOnlineSession)
+	{
+		if (UPong_GameInstance* PongGameInstance = Cast<UPong_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
+		{
+			PongGameInstance->JoinSteamSession(OnlineSessionIndex);
+		}
+		return;
+	}
+
 	auto PC = GetOwningPlayer();
 	if (PC)
 	{

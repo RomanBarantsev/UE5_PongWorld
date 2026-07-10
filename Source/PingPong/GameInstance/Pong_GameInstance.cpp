@@ -5,9 +5,11 @@
 #include "Interfaces/IHttpResponse.h"
 #include "Interfaces/IHttpRequest.h"
 #include "HttpModule.h"
+#include "OnlineSessionSettings.h"
 #include "SocketSubsystem.h"
 #include "GameFramework/GameModeBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "Online/OnlineSessionNames.h"
 #include "PingPong/Settings/Pong_GameUserSettings.h"
 
 void UPong_GameInstance::OnServerListGet(TSharedPtr<IHttpRequest> HttpRequest, TSharedPtr<IHttpResponse> HttpResponse,
@@ -110,6 +112,51 @@ void UPong_GameInstance::HostShutdown()
 	Request->SetURL(Url);
 	Request->SetVerb("GET");
 	Request->ProcessRequest();
+}
+
+bool UPong_GameInstance::HostSteamSession(const FString& MapName, const FString& ServerName, int32 MaxPlayers)
+{
+	return StartOnlineGame(MapName, ServerName, false, true, MaxPlayers);
+}
+
+void UPong_GameInstance::GetSteamServersList()
+{
+	FindOnlineGames(false, true);
+}
+
+bool UPong_GameInstance::JoinSteamSession(int32 OnlineSessionIndex)
+{
+	return JoinOnlineGameByIndex(OnlineSessionIndex);
+}
+
+void UPong_GameInstance::OnFindSessionsComplete(bool bWasSuccessful)
+{
+	Super::OnFindSessionsComplete(bWasSuccessful);
+
+	TArray<FServerInfo> Servers;
+	if (bWasSuccessful && SessionSearch.IsValid())
+	{
+		for (int32 SearchIdx = 0; SearchIdx < SessionSearch->SearchResults.Num(); ++SearchIdx)
+		{
+			const FOnlineSessionSearchResult& Result = SessionSearch->SearchResults[SearchIdx];
+
+			FString ServerName;
+			if (!Result.Session.SessionSettings.Get(FName(TEXT("SERVER_NAME")), ServerName) || ServerName.IsEmpty())
+			{
+				ServerName = Result.Session.OwningUserName;
+			}
+
+			FServerInfo Server;
+			Server.Name = ServerName;
+			Server.CurrentPlayers = Result.Session.SessionSettings.NumPublicConnections - Result.Session.NumOpenPublicConnections;
+			Server.MaxPlayers = Result.Session.SessionSettings.NumPublicConnections;
+			Server.bIsOnlineSession = true;
+			Server.OnlineSessionIndex = SearchIdx;
+			Servers.Add(Server);
+		}
+	}
+
+	OnServerListReady.ExecuteIfBound(Servers);
 }
 
 void UPong_GameInstance::Init()

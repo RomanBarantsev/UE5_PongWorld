@@ -36,8 +36,10 @@ bool UNetworkGameInstance::HostSession(TSharedPtr<const FUniqueNetId> UserId, FN
 			SessionSettings->bShouldAdvertise = true;
 			SessionSettings->bAllowJoinViaPresence = true;
 			SessionSettings->bAllowJoinViaPresenceFriendsOnly = false;
+			SessionSettings->bUseLobbiesIfAvailable = true;
 
-			SessionSettings->Set(SETTING_MAPNAME, FString("GameMap"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+			SessionSettings->Set(SETTING_MAPNAME, PendingMapName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+			SessionSettings->Set(FName(TEXT("SERVER_NAME")), PendingServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 			// Set the delegate to the Handle of the SessionInterface
 			OnCreateSessionCompleteDelegateHandle = Sessions->AddOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegate);
 			// Our delegate should get called when this is complete (doesn't need to be successful!)
@@ -50,6 +52,22 @@ bool UNetworkGameInstance::HostSession(TSharedPtr<const FUniqueNetId> UserId, FN
 		}
 	}
 	return false;
+}
+
+bool UNetworkGameInstance::StartOnlineGame(const FString& MapName, const FString& ServerName, bool bIsLAN,
+                                           bool bIsPresence, int32 MaxNumPlayers)
+{
+	ULocalPlayer* const Player = GetFirstGamePlayer();
+	if (!Player)
+	{
+		return false;
+	}
+
+	PendingMapName = MapName.IsEmpty() ? TEXT("GameMap") : MapName;
+	PendingServerName = ServerName.IsEmpty() ? TEXT("PingPong Server") : ServerName;
+
+	DestroySessionAndLeaveGame();
+	return HostSession(Player->GetPreferredUniqueNetId().GetUniqueNetId(), NAME_GameSession, bIsLAN, bIsPresence, MaxNumPlayers);
 }
 
 UNetworkGameInstance::UNetworkGameInstance(const FObjectInitializer& ObjectInitializer)
@@ -109,7 +127,7 @@ void UNetworkGameInstance::OnStartOnlineGameComplete(FName SessionName, bool bWa
 	// If the start was successful, we can open a NewMap if we want. Make sure to use "listen" as a parameter!
 	if (bWasSuccessful)
 	{
-		UGameplayStatics::OpenLevel(GetWorld(), "GameMap", true, "listen");
+		UGameplayStatics::OpenLevel(GetWorld(), FName(*PendingMapName), true, "listen");
 	}
 }
 
@@ -159,6 +177,10 @@ void UNetworkGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 		{
 			// Clear the Delegate handle, since we finished this call
 			Sessions->ClearOnFindSessionsCompleteDelegate_Handle(OnFindSessionsCompleteDelegateHandle);
+			if (!SessionSearch.IsValid())
+			{
+				return;
+			}
 
 			// Just debugging the Number of Search results. Can be displayed in UMG or something later on
 			UE_LOG(LogTemp, Error, TEXT("Num Search Results: %d"), SessionSearch->SearchResults.Num());
@@ -173,7 +195,6 @@ void UNetworkGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 					// OwningUserName is just the SessionName for now. I guess you can create your own Host Settings class and GameSession Class and add a proper GameServer Name here.
 					// This is something you can't do in Blueprint for example!
 					UE_LOG(LogTemp, Error, TEXT("Session Number: %d | Sessionname: %s "), SearchIdx+1, *(SessionSearch->SearchResults[SearchIdx].Session.OwningUserName));
-					JoinOnlineGame();
 				}
 			}
 		}
@@ -270,18 +291,24 @@ void UNetworkGameInstance::OnDestroySessionComplete(FName SessionName, bool bWas
 
 void UNetworkGameInstance::StartOnlineGame()
 {
-	ULocalPlayer* const Player = GetFirstGamePlayer();
-	
-	// Call our custom HostSession function. GameSessionName is a GameInstance variable
-	DestroySessionAndLeaveGame();
-	HostSession(Player->GetPreferredUniqueNetId().GetUniqueNetId(), NAME_GameSession, true, false, 4);
+	StartOnlineGame(TEXT("GameMap"), TEXT("PingPong Server"), false, true, 4);
 }
 
 void UNetworkGameInstance::FindOnlineGames()
 {
-	ULocalPlayer* const Player = GetFirstGamePlayer();
+	FindOnlineGames(false, true);
+}
 
-	FindSessions(Player->GetPreferredUniqueNetId().GetUniqueNetId(), true, true);
+void UNetworkGameInstance::FindOnlineGames(bool bIsLAN, bool bIsPresence)
+{
+	ULocalPlayer* const Player = GetFirstGamePlayer();
+	if (!Player)
+	{
+		OnFindSessionsComplete(false);
+		return;
+	}
+
+	FindSessions(Player->GetPreferredUniqueNetId().GetUniqueNetId(), bIsLAN, bIsPresence);
 }
 
 void UNetworkGameInstance::JoinOnlineGame()
@@ -309,6 +336,18 @@ void UNetworkGameInstance::JoinOnlineGame()
 			}
 		}
 	}	
+}
+
+bool UNetworkGameInstance::JoinOnlineGameByIndex(int32 SearchResultIndex)
+{
+	ULocalPlayer* const Player = GetFirstGamePlayer();
+	if (!Player || !SessionSearch.IsValid() || !SessionSearch->SearchResults.IsValidIndex(SearchResultIndex))
+	{
+		return false;
+	}
+
+	return JoinFoundSession(Player->GetPreferredUniqueNetId().GetUniqueNetId(), NAME_GameSession,
+		SessionSearch->SearchResults[SearchResultIndex]);
 }
 
 void UNetworkGameInstance::DestroySessionAndLeaveGame()

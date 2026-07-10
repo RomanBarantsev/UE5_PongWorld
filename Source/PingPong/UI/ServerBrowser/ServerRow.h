@@ -26,6 +26,10 @@ public:
 	FString IP;
 	UPROPERTY()
 	int Port;
+	UPROPERTY()
+	bool bIsOnlineSession = false;
+	UPROPERTY()
+	int32 OnlineSessionIndex = INDEX_NONE;
 	void SetCurrentPlayers(int Players,int maxPlayers);
 	void SetServerName(FString Name);
 	UFUNCTION()

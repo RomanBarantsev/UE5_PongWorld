@@ -4,20 +4,28 @@
 
 #include "CoreMinimal.h"
 #include "NetworkGameInstance.h"
-#include "Engine/GameInstance.h"
 #include "Pong_GameInstance.generated.h"
 
 class UPong_GameUserSettings;
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FServerInfo
 {
 	GENERATED_BODY()
+	UPROPERTY(BlueprintReadOnly)
 	FString IP;
+	UPROPERTY(BlueprintReadOnly)
 	int Port;
+	UPROPERTY(BlueprintReadOnly)
 	int CurrentPlayers;
+	UPROPERTY(BlueprintReadOnly)
 	int MaxPlayers;
+	UPROPERTY(BlueprintReadOnly)
 	FString Name;
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsOnlineSession = false;
+	UPROPERTY(BlueprintReadOnly)
+	int32 OnlineSessionIndex = INDEX_NONE;
 };
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnServerListReady, const TArray<FServerInfo>&, ServerList);
@@ -29,7 +37,7 @@ class IHttpRequest;
  * 
  */
 UCLASS()
-class PINGPONG_API UPong_GameInstance : public UGameInstance
+class PINGPONG_API UPong_GameInstance : public UNetworkGameInstance
 {
 	GENERATED_BODY()
 public:
@@ -39,6 +47,10 @@ public:
 	void CreateHost(FString map,FString serverName,uint32 id);
 	void PlayersUpdate();
 	void HostShutdown();
+	bool HostSteamSession(const FString& MapName, const FString& ServerName, int32 MaxPlayers = 4);
+	void GetSteamServersList();
+	bool JoinSteamSession(int32 OnlineSessionIndex);
+	virtual void OnFindSessionsComplete(bool bWasSuccessful) override;
 public:
 	FOnServerListReady OnServerListReady;
 

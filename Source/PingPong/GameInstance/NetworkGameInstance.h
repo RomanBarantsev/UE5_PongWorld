@@ -38,6 +38,7 @@ public:
 
 	TSharedPtr<class FOnlineSessionSettings> SessionSettings;
 	UNetworkGameInstance(const FObjectInitializer& ObjectInitializer);
+	bool StartOnlineGame(const FString& MapName, const FString& ServerName, bool bIsLAN, bool bIsPresence, int32 MaxNumPlayers);
 	
 	/**
 	*	Function fired when a session create request has completed
@@ -73,7 +74,7 @@ public:
 	*
 	*	@param bWasSuccessful true if the async action completed without error, false if there was an error
 	*/
-	void OnFindSessionsComplete(bool bWasSuccessful);
+	virtual void OnFindSessionsComplete(bool bWasSuccessful);
 	/**
 	*	Joins a session via a search result
 	*
@@ -112,8 +113,13 @@ public:
 	void StartOnlineGame();
 	UFUNCTION(BlueprintCallable, Category = "Network|Test")
 	void FindOnlineGames();
+	void FindOnlineGames(bool bIsLAN, bool bIsPresence);
 	UFUNCTION(BlueprintCallable, Category = "Network|Test")
 	void JoinOnlineGame();
+	bool JoinOnlineGameByIndex(int32 SearchResultIndex);
 	UFUNCTION(BlueprintCallable, Category = "Network|Test")
 	void DestroySessionAndLeaveGame();
+protected:
+	FString PendingMapName = TEXT("GameMap");
+	FString PendingServerName = TEXT("PingPong Server");
 };

@@ -66,6 +66,17 @@ void UHostGame::HostServerBtnClicked()
 	}
 	else
 	{
-		
+		auto GI=UGameplayStatics::GetGameInstance(GetWorld());
+		if (GI)
+		{
+			UPong_GameInstance* Pong_GameInstance = Cast<UPong_GameInstance>(GI);
+			if (Pong_GameInstance)
+			{
+				auto PS = UGameplayStatics::GetPlayerState(GetWorld(),0);
+				const FString ServerName = PS ? PS->GetPlayerName() : TEXT("PingPong Server");
+				Pong_GameInstance->HostSteamSession(MapChoosedName, ServerName);
+				this->SetVisibility(ESlateVisibility::Collapsed);
+			}
+		}
 	}
 }
