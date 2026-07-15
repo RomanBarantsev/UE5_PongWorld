@@ -3,6 +3,7 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
+[SupportedPlatforms(UnrealPlatformClass.Server)]
 public class PingPongServerTarget : TargetRules
 {
 	public PingPongServerTarget( TargetInfo Target) : base(Target)
