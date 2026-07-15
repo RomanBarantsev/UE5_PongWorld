@@ -55,5 +55,5 @@ private:
 	FString CrowServerAddress = TEXT("localhost");
 	FTimerHandle ShutDownServerHandle;
 	void OnTimer();
-	float WaitTime=15;
+	float WaitTime=120;
 };
