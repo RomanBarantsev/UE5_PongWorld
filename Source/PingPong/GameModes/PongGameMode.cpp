@@ -117,6 +117,20 @@ void APongGameMode::Logout(AController* Exiting)
 	PingPongGameState->HandlePlayerStatesUpdated();
 }
 
+void APongGameMode::FinishGameServer()
+{
+	if (!HasAuthority())
+		return;
+	UAgonesSubsystem* Agones = UAgonesSubsystem::Get(this);
+	if (!IsValid(Agones))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Agones subsystem is unavailable"));
+		return;
+	}
+	Agones->Shutdown(FShutdownDelegate(),FAgonesErrorDelegate());
+	UE_LOG(LogTemp, Log, TEXT("Agones shutdown requested"));
+}
+
 APlayerController* APongGameMode::SpawnPlayerController(ENetRole InRemoteRole, const FString& Options)
 {
 	if (!PingPongGameState)

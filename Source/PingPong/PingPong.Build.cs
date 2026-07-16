@@ -25,7 +25,8 @@ public class PingPong : ModuleRules
 			"Slate",
 			"Json",
 			"JsonUtilities",
-			"HTTP"
+			"HTTP",
+			"Agones"
 		});
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
